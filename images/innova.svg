@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d9e2e8"/><stop offset="1" stop-color="#66727d"/></linearGradient></defs>
+<rect width="1200" height="700" fill="url(#g)"/><rect y="470" width="1200" height="230" fill="#26313a"/>
+<ellipse cx="610" cy="490" rx="390" ry="48" fill="#111820" opacity=".55"/>
+<path d="M300 470 L370 350 Q410 285 500 270 L720 270 Q800 290 850 355 L920 470 Z" fill="#f4f4f0" stroke="#202a31" stroke-width="8"/>
+<path d="M435 345 L500 292 L705 292 L775 345 Z" fill="#27343d"/>
+<circle cx="430" cy="475" r="60" fill="#171c21"/><circle cx="430" cy="475" r="28" fill="#aeb6bb"/>
+<circle cx="800" cy="475" r="60" fill="#171c21"/><circle cx="800" cy="475" r="28" fill="#aeb6bb"/>
+<text x="60" y="100" font-family="Arial" font-size="34" fill="#fff" font-weight="700">TEJAS TAXI</text>
+<text x="60" y="145" font-family="Arial" font-size="20" fill="#fff">Replace this image with your actual car photo</text></svg>
