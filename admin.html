@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>Tejas Taxi — Admin</title>
+  <link rel="stylesheet" href="css/admin.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase.js"></script>
+</head>
+<body>
+  <div id="loginScreen" class="screen">
+    <form id="loginForm" class="login-card">
+      <div class="brand">🚕 TEJAS TAXI</div>
+      <h1>Admin Panel</h1>
+      <p>Customers never need to log in.</p>
+      <label>Email<input id="email" type="email" autocomplete="username" required></label>
+      <label>Password<input id="password" type="password" autocomplete="current-password" required></label>
+      <button class="primary" type="submit">Login</button>
+      <div id="loginError" class="error"></div>
+    </form>
+  </div>
+
+  <div id="app" class="hidden">
+    <aside class="sidebar">
+      <div class="brand">🚕 TEJAS TAXI</div>
+      <nav>
+        <button class="nav active" data-panel="dashboard">📊 Dashboard</button>
+        <button class="nav" data-panel="cars">🚗 Cars</button>
+        <button class="nav" data-panel="routes">🛣️ Routes</button>
+        <button class="nav" data-panel="services">🧰 Services</button>
+        <button class="nav" data-panel="reviews">⭐ Reviews</button>
+        <button class="nav" data-panel="bookings">📋 Bookings</button>
+        <button class="nav" data-panel="settings">⚙️ Settings</button>
+      </nav>
+      <button id="logoutBtn" class="logout">↪ Logout</button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Dashboard</h1>
+          <p>Manage your website without editing code.</p>
+        </div>
+        <button id="menuBtn" class="menu">☰</button>
+      </header>
+
+      <section id="dashboard" class="panel active">
+        <div class="cards">
+          <div class="stat"><span>Cars</span><b id="statCars">—</b></div>
+          <div class="stat"><span>Routes</span><b id="statRoutes">—</b></div>
+          <div class="stat"><span>Services</span><b id="statServices">—</b></div>
+          <div class="stat"><span>Reviews</span><b id="statReviews">—</b></div>
+          <div class="stat"><span>Bookings</span><b id="statBookings">—</b></div>
+        </div>
+        <div class="welcome card">
+          <h2>Welcome to Tejas Taxi Admin</h2>
+          <p>Use the menu to manage cars, routes, services, reviews, bookings and website settings.</p>
+        </div>
+      </section>
+
+      <section id="cars" class="panel">
+        <div class="section-head"><h2>Cars</h2><button class="primary" data-add="cars">+ Add Car</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Photo</th><th>Name</th><th>Category</th><th>Price</th><th>Seats</th><th>Status</th><th></th></tr></thead><tbody id="carsBody"></tbody></table></div>
+      </section>
+
+      <section id="routes" class="panel">
+        <div class="section-head"><h2>Routes</h2><button class="primary" data-add="routes">+ Add Route</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Route</th><th>Distance</th><th>Time</th><th>One Way</th><th>Round Trip</th><th></th></tr></thead><tbody id="routesBody"></tbody></table></div>
+      </section>
+
+      <section id="services" class="panel">
+        <div class="section-head"><h2>Services</h2><button class="primary" data-add="services">+ Add Service</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Title</th><th>Description</th><th>Icon</th><th>Status</th><th></th></tr></thead><tbody id="servicesBody"></tbody></table></div>
+      </section>
+
+      <section id="reviews" class="panel">
+        <div class="section-head"><h2>Reviews</h2><button class="primary" data-add="reviews">+ Add Review</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>City</th><th>Rating</th><th>Review</th><th></th></tr></thead><tbody id="reviewsBody"></tbody></table></div>
+      </section>
+
+      <section id="bookings" class="panel">
+        <div class="section-head"><h2>Bookings</h2><button id="refreshBookings" class="secondary">↻ Refresh</button></div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Customer</th><th>Route</th><th>Trip</th><th>Passengers</th><th>Status</th><th></th></tr></thead><tbody id="bookingsBody"></tbody></table></div>
+      </section>
+
+      <section id="settings" class="panel">
+        <h2>Website Settings</h2>
+        <form id="settingsForm" class="form-grid">
+          <label>Business name<input name="business_name"></label>
+          <label>Phone<input name="phone"></label>
+          <label>WhatsApp number<input name="whatsapp"></label>
+          <label>Email<input name="email"></label>
+          <label class="full">Address<input name="address"></label>
+          <label class="full">Hero image URL<input name="hero_image_url"></label>
+          <label class="full">Hero title<textarea name="hero_title"></textarea></label>
+          <label class="full">Hero description<textarea name="hero_description"></textarea></label>
+          <label class="full">About text<textarea name="about_text"></textarea></label>
+          <div class="full"><button class="primary" type="submit">Save Settings</button><span id="settingsMsg"></span></div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head"><h2 id="modalTitle">Edit</h2><button id="closeModal" class="icon">✕</button></div>
+      <form id="modalForm"></form>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script src="js/admin.js"></script>
+</body>
+</html>
