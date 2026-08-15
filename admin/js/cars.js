@@ -21,7 +21,7 @@ window.loadCars = async () => {
           : '—'}
       </td>
 
-      <td>${esc(c.name)}</td>
+      <td>${esc(c.name || '')}</td>
 
       <td>${esc(c.category || '')}</td>
 
@@ -80,14 +80,12 @@ function openCar(id) {
             value="${esc(c.name || '')}">
         </label>
 
-
         <label>
           Category
           <input
             name="category"
             value="${esc(c.category || '')}">
         </label>
-
 
         <label>
           Price / km
@@ -98,7 +96,6 @@ function openCar(id) {
             placeholder="Leave blank">
         </label>
 
-
         <label>
           Seats
           <input
@@ -107,15 +104,6 @@ function openCar(id) {
             value="${c.seats || ''}">
         </label>
 
-
-        <label>
-          Luggage
-          <input
-            name="luggage"
-            value="${esc(c.luggage || '')}">
-        </label>
-
-
         <label>
           Photo URL
           <input
@@ -123,16 +111,14 @@ function openCar(id) {
             value="${esc(c.image_url || '')}">
         </label>
 
+        <label>
+          Status
+          <input
+            name="status"
+            value="${esc(c.status || 'Available')}">
+        </label>
+
       </div>
-
-
-      <label>
-        Features
-        <input
-          name="features"
-          value="${esc((c.features || []).join(', '))}">
-      </label>
-
 
       <label>
         <input
@@ -142,7 +128,6 @@ function openCar(id) {
         Visible
       </label>
 
-
       <button class="primary">
         Save Car
       </button>
@@ -151,6 +136,7 @@ function openCar(id) {
     async f => {
 
       const priceValue = f.get('price_per_km');
+      const seatsValue = f.get('seats');
 
       const p = {
 
@@ -158,31 +144,23 @@ function openCar(id) {
 
         category: f.get('category'),
 
-        /*
-         * Price optional hai.
-         * Blank hone par NULL Supabase me jayega.
-         */
+        // Price blank = NULL
         price_per_km:
           priceValue === ''
             ? null
             : Number(priceValue),
 
+        // Seats blank = 0
         seats:
-          f.get('seats') === ''
+          seatsValue === ''
             ? 0
-            : Number(f.get('seats')),
-
-        luggage:
-          f.get('luggage'),
+            : Number(seatsValue),
 
         image_url:
           f.get('image_url'),
 
-        features:
-          f.get('features')
-            .split(',')
-            .map(x => x.trim())
-            .filter(Boolean),
+        status:
+          f.get('status') || 'Available',
 
         active:
           f.get('active') === 'on'
@@ -190,7 +168,6 @@ function openCar(id) {
 
 
       const { error } = id
-
         ? await client
             .from('cars')
             .update(p)
