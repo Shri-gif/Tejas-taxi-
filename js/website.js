@@ -210,33 +210,37 @@ async function loadRoutes() {
 // =========================
 // REVIEWS
 // =========================
-async function loadReviews(){
-  const {data,error}=await supabaseClient
+async function loadReviews() {
+  const { data, error } = await supabaseClient
     .from('reviews')
     .select('*')
-    .eq('active',true);
+    .eq('visible', true)
+    .order('created_at', { ascending: false })
+    .limit(6);
 
-  console.log('REVIEWS DATA:',data);
-  console.log('REVIEWS ERROR:',error);
+  const b = document.querySelector('#reviewGrid');
+  if (!b) return;
 
-  const b=document.querySelector('#reviewGrid');
-  if(!b)return;
-
-  if(error){
-    b.innerHTML='<p style="color:red;">'+esc(error.message)+'</p>';
+  if (error) {
+    console.error('Reviews error:', error);
+    b.innerHTML = `<p>Unable to load reviews.</p>`;
     return;
   }
 
-  b.innerHTML=(data||[]).map(r=>`
+  b.innerHTML = (data || []).map(r => `
     <article class="review-card">
-      ★★★★★
-      <p>“${esc(r.review||'')}”</p>
-      <b>🟡 ${esc(r.customer_name||'')}</b>
-      <small>${esc(r.city||'')}</small>
+      <div class="stars">
+        ${'★'.repeat(Number(r.rating || 5))}
+      </div>
+
+      <p>“${esc(r.review || '')}”</p>
+
+      <b>🟡 ${esc(r.name || '')}</b>
+
+      <small>${esc(r.city || '')}</small>
     </article>
   `).join('');
 }
-
 
 // =========================
 // START WEBSITE
