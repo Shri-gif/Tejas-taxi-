@@ -129,16 +129,15 @@ async function loadCars() {
 async function loadServices(){
   const {data,error}=await supabaseClient
     .from('services')
-    .select('*')
-    .eq('active',true)
-    .order('created_at');
+    .select('*');
+
+  console.log('SERVICES:',data,error);
 
   const b=document.querySelector('#serviceGrid');
   if(!b)return;
 
   if(error){
-    console.error('Services error:',error);
-    b.innerHTML='<p>Unable to load services: '+esc(error.message)+'</p>';
+    b.innerHTML='Error: '+error.message;
     return;
   }
 
@@ -146,18 +145,12 @@ async function loadServices(){
     <article class="service-card">
       <div class="icon">${esc(s.icon||'✦')}</div>
       <small>0${i+1}</small>
-      <h3>${esc(s.title)}</h3>
+      <h3>${esc(s.title||'')}</h3>
       <p>${esc(s.description||'')}</p>
       <a href="#booking">Book this service →</a>
     </article>
   `).join('');
 }
-
-  if (!data || data.length === 0) {
-    box.innerHTML = '<p>No services available right now.</p>';
-  }
-}
-
 
 // =========================
 // ROUTES
@@ -165,35 +158,27 @@ async function loadServices(){
 async function loadRoutes(){
   const {data,error}=await supabaseClient
     .from('routes')
-    .select('*')
-    .eq('active',true)
-    .order('created_at');
+    .select('*');
+
+  console.log('ROUTES:',data,error);
 
   const b=document.querySelector('#routesTable');
   if(!b)return;
 
   if(error){
-    console.error('Routes error:',error);
-    b.innerHTML='<p>Unable to load routes: '+esc(error.message)+'</p>';
+    b.innerHTML='Error: '+error.message;
     return;
   }
 
-  b.innerHTML=
-    '<div class="route header"><span>ROUTE</span><span>DISTANCE/TIME</span><span>ONE WAY</span><span>ROUND TRIP</span><span></span></div>'+
-    (data||[]).map(r=>`
-      <div class="route">
-        <span>${esc(r.pickup)} → ${esc(r.destination)}</span>
-        <span>${esc(r.distance||'')}<br>${esc(r.travel_time||'')}</span>
-        <b>₹${Number(r.one_way_price||0).toLocaleString('en-IN')}</b>
-        <b>₹${Number(r.round_trip_price||0).toLocaleString('en-IN')}</b>
-        <a href="#booking">Book →</a>
-      </div>
-    `).join('');
-}
-
-  if (!data || data.length === 0) {
-    box.innerHTML += '<p>No routes available right now.</p>';
-  }
+  b.innerHTML=(data||[]).map(r=>`
+    <div class="route">
+      <span>${esc(r.pickup||'')} → ${esc(r.destination||'')}</span>
+      <span>${esc(r.distance||'')}<br>${esc(r.travel_time||'')}</span>
+      <b>₹${Number(r.one_way_price||0).toLocaleString('en-IN')}</b>
+      <b>₹${Number(r.round_trip_price||0).toLocaleString('en-IN')}</b>
+      <a href="#booking">Book →</a>
+    </div>
+  `).join('');
 }
 
 
@@ -203,35 +188,27 @@ async function loadRoutes(){
 async function loadReviews(){
   const {data,error}=await supabaseClient
     .from('reviews')
-    .select('*')
-    .eq('active',true)
-    .order('created_at',{ascending:false})
-    .limit(6);
+    .select('*');
+
+  console.log('REVIEWS:',data,error);
 
   const b=document.querySelector('#reviewGrid');
   if(!b)return;
 
   if(error){
-    console.error('Reviews error:',error);
-    b.innerHTML='<p>Unable to load reviews: '+esc(error.message)+'</p>';
+    b.innerHTML='Error: '+error.message;
     return;
   }
 
   b.innerHTML=(data||[]).map(r=>`
     <article class="review-card">
       ★★★★★
-      <p>“${esc(r.review)}”</p>
-      <b>🟡 ${esc(r.customer_name)}</b>
+      <p>“${esc(r.review||'')}”</p>
+      <b>🟡 ${esc(r.customer_name||'')}</b>
       <small>${esc(r.city||'')}</small>
     </article>
   `).join('');
 }
-
-  if (!data || data.length === 0) {
-    box.innerHTML = '<p>No reviews available yet.</p>';
-  }
-}
-
 
 // =========================
 // START WEBSITE
