@@ -1,4 +1,23 @@
+// ============================================================
+// TEJAS TAXI - CARS ADMIN
+// Supabase table: public.cars
+//
+// Columns:
+// id
+// name
+// category
+// price
+// seats
+// luggage
+// image_url
+// features       -> JSONB ARRAY
+// visible        -> BOOLEAN
+// created_at
+// ============================================================
+
 (() => {
+  "use strict";
+
   const db = window.supabaseClient;
 
   if (!db) {
@@ -6,14 +25,14 @@
     return;
   }
 
-  const $ = id => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
 
-  // --------------------------------------------------
-  // Small helpers
-  // --------------------------------------------------
+  // ------------------------------------------------------------
+  // Helpers
+  // ------------------------------------------------------------
 
-  function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
+  function esc(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
       "&": "&amp;",
       "<": "&lt;",
       ">": "&gt;",
@@ -22,118 +41,85 @@
     }[char]));
   }
 
-  function showToast(message, error = false) {
-    let toast = $("adminToast");
-
-    if (!toast) {
-      toast = document.createElement("div");
-      toast.id = "adminToast";
-
-      Object.assign(toast.style, {
-        position: "fixed",
-        left: "50%",
-        bottom: "25px",
-        transform: "translateX(-50%)",
-        zIndex: "99999",
-        padding: "14px 22px",
-        borderRadius: "12px",
-        color: "#fff",
-        fontSize: "15px",
-        fontWeight: "600",
-        maxWidth: "90%",
-        textAlign: "center",
-        boxShadow: "0 10px 30px rgba(0,0,0,.25)"
-      });
-
-      document.body.appendChild(toast);
-    }
-
-    toast.textContent = message;
-    toast.style.background = error ? "#c62828" : "#15803d";
-    toast.style.display = "block";
-
-    clearTimeout(window.__adminToastTimer);
-
-    window.__adminToastTimer = setTimeout(() => {
-      toast.style.display = "none";
-    }, 3000);
+  function showError(message) {
+    console.error(message);
+    alert(message);
   }
-
-  function closeModal() {
-    const modal = $("modal");
-    if (modal) modal.classList.add("hidden");
-  }
-
-  function openModal() {
-    const modal = $("modal");
-
-    if (!modal) {
-      showToast("Modal element not found.", true);
-      return;
-    }
-
-    modal.classList.remove("hidden");
-  }
-
-  // --------------------------------------------------
-  // Features JSON handling
-  // --------------------------------------------------
 
   function parseFeatures(value) {
     if (Array.isArray(value)) {
-      return value;
+      return value
+        .map(v => String(v).trim())
+        .filter(Boolean);
     }
 
-    if (value === null || value === undefined || value === "") {
+    const text = String(value ?? "").trim();
+
+    if (!text) {
       return [];
     }
 
-    const text = String(value).trim();
+    // If user enters JSON array:
+    // ["Fully AC","Music System"]
+    if (text.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(text);
 
-    // First try proper JSON
-    try {
-      const parsed = JSON.parse(text);
+        if (!Array.isArray(parsed)) {
+          throw new Error("Features must be a JSON array.");
+        }
 
-      if (Array.isArray(parsed)) {
-        return parsed;
+        return parsed
+          .map(v => String(v).trim())
+          .filter(Boolean);
+
+      } catch (error) {
+        throw new Error(
+          'Features JSON is invalid. Use ["Fully AC","Music System"] or write features separated by commas.'
+        );
       }
-
-      // If JSON is valid but not an array,
-      // convert it to one item.
-      return [String(parsed)];
-    } catch (error) {
-      // Also support simple input:
-      // Fully AC, Music System, GPS
-      return text
-        .split(",")
-        .map(item => item.trim())
-        .filter(Boolean);
-    }
-  }
-
-  function featuresToText(features) {
-    if (!Array.isArray(features)) {
-      return "";
     }
 
-    return features.join(", ");
+    // Normal input:
+    // Fully AC, Music System, Push Back Seats
+    return text
+      .split(/[,|\n]/)
+      .map(v => v.trim())
+      .filter(Boolean);
   }
 
-  // --------------------------------------------------
+  function formatFeatures(value) {
+    if (Array.isArray(value)) {
+      return value.join(", ");
+    }
+
+    return String(value ?? "");
+  }
+
+  function money(value) {
+    const number = Number(value);
+
+    if (!Number.isFinite(number)) {
+      return "₹0";
+    }
+
+    return `₹${number}`;
+  }
+
+  // ------------------------------------------------------------
   // Load Cars
-  // --------------------------------------------------
+  // ------------------------------------------------------------
 
   async function loadCars() {
     const body = $("carsBody");
 
     if (!body) {
-      console.error("carsBody not found.");
       return;
     }
 
     body.innerHTML = `
       <tr>
-        <td colspan="7" style="text-align:center;">
+        <td colspan="7" style="text-align:center;padding:25px;">
           Loading cars...
         </td>
       </tr>
@@ -149,8 +135,8 @@
 
       body.innerHTML = `
         <tr>
-          <td colspan="7" style="text-align:center;color:#c62828;">
-            ${escapeHTML(error.message)}
+          <td colspan="7" style="text-align:center;padding:25px;color:#c00;">
+            ${esc(error.message)}
           </td>
         </tr>
       `;
@@ -161,198 +147,203 @@
     if (!data || data.length === 0) {
       body.innerHTML = `
         <tr>
-          <td colspan="7" style="text-align:center;">
+          <td colspan="7" style="text-align:center;padding:25px;">
             No cars added yet.
           </td>
         </tr>
       `;
-
       return;
     }
 
-    body.innerHTML = data.map(car => {
-      const image = car.image_url
-        ? `
-          <img
-            src="${escapeHTML(car.image_url)}"
-            alt="${escapeHTML(car.name)}"
-            style="
-              width:70px;
-              height:45px;
-              object-fit:cover;
-              border-radius:8px;
-            "
-            onerror="this.style.display='none'"
+    body.innerHTML = data.map(car => `
+      <tr>
+
+        <td>
+          ${
+            car.image_url
+              ? `
+                <img
+                  src="${esc(car.image_url)}"
+                  alt="${esc(car.name)}"
+                  style="
+                    width:70px;
+                    height:45px;
+                    object-fit:cover;
+                    border-radius:8px;
+                  "
+                  onerror="this.style.display='none'"
+                >
+              `
+              : `<span>No photo</span>`
+          }
+        </td>
+
+        <td>
+          <strong>${esc(car.name)}</strong>
+        </td>
+
+        <td>
+          ${esc(car.category)}
+        </td>
+
+        <td>
+          ${money(car.price)}/km
+        </td>
+
+        <td>
+          ${esc(car.seats)}
+        </td>
+
+        <td>
+          ${
+            car.visible
+              ? `<span class="status active">Visible</span>`
+              : `<span class="status inactive">Hidden</span>`
+          }
+        </td>
+
+        <td>
+          <button
+            class="small-btn edit-car"
+            data-id="${esc(car.id)}"
           >
-        `
-        : "—";
+            Edit
+          </button>
 
-      const visibleText = car.visible ? "Visible" : "Hidden";
+          <button
+            class="small-btn danger delete-car"
+            data-id="${esc(car.id)}"
+          >
+            Delete
+          </button>
+        </td>
 
-      return `
-        <tr data-id="${escapeHTML(car.id)}">
+      </tr>
+    `).join("");
 
-          <td>${image}</td>
+    // Edit buttons
+    document.querySelectorAll(".edit-car").forEach(button => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.id;
+        editCar(id);
+      });
+    });
 
-          <td>
-            <strong>${escapeHTML(car.name)}</strong>
-          </td>
-
-          <td>
-            ${escapeHTML(car.category || "—")}
-          </td>
-
-          <td>
-            ₹${escapeHTML(car.price ?? 0)}
-          </td>
-
-          <td>
-            ${escapeHTML(car.seats ?? 0)}
-          </td>
-
-          <td>
-            ${visibleText}
-          </td>
-
-          <td class="actions">
-
-            <button
-              type="button"
-              class="small"
-              data-car-edit="${escapeHTML(car.id)}"
-            >
-              Edit
-            </button>
-
-            <button
-              type="button"
-              class="small danger"
-              data-car-delete="${escapeHTML(car.id)}"
-            >
-              Delete
-            </button>
-
-          </td>
-
-        </tr>
-      `;
-    }).join("");
+    // Delete buttons
+    document.querySelectorAll(".delete-car").forEach(button => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.id;
+        deleteCar(id);
+      });
+    });
   }
 
-  // --------------------------------------------------
-  // Car Form
-  // --------------------------------------------------
+  // ------------------------------------------------------------
+  // Open Add Car
+  // ------------------------------------------------------------
 
-  function carFormHTML(car = {}) {
-    const features = featuresToText(car.features);
+  function openAddCar() {
+    const modal = $("modal");
+    const modalTitle = $("modalTitle");
+    const form = $("modalForm");
 
-    return `
-      <label>
-        Name
-        <input
-          name="name"
-          type="text"
-          value="${escapeHTML(car.name)}"
-          placeholder="e.g. INNOVA"
-          required
-        >
-      </label>
+    if (!modal || !modalTitle || !form) {
+      return;
+    }
 
-      <label>
-        Category
-        <input
-          name="category"
-          type="text"
-          value="${escapeHTML(car.category)}"
-          placeholder="e.g. Crysta"
-        >
-      </label>
+    modalTitle.textContent = "Add Car";
 
-      <label>
-        Price / km
-        <input
-          name="price"
-          type="number"
-          min="0"
-          step="0.01"
-          value="${escapeHTML(car.price ?? 0)}"
-          placeholder="18"
-        >
-      </label>
+    form.innerHTML = `
+      <div class="grid2">
 
-      <label>
-        Seats
-        <input
-          name="seats"
-          type="number"
-          min="1"
-          step="1"
-          value="${escapeHTML(car.seats ?? 4)}"
-          placeholder="7"
-        >
-      </label>
+        <label>
+          Name
+          <input
+            name="name"
+            type="text"
+            placeholder="e.g. Innova"
+            required
+          >
+        </label>
 
-      <label>
-        Luggage
-        <input
-          name="luggage"
-          type="text"
-          value="${escapeHTML(car.luggage)}"
-          placeholder="As per need"
-        >
-      </label>
+        <label>
+          Category
+          <input
+            name="category"
+            type="text"
+            placeholder="e.g. Crysta"
+            required
+          >
+        </label>
 
-      <label>
-        Photo URL
-        <input
-          name="image_url"
-          type="url"
-          value="${escapeHTML(car.image_url)}"
-          placeholder="https://..."
-        >
-      </label>
+        <label>
+          Price / km
+          <input
+            name="price"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="18"
+            required
+          >
+        </label>
 
-      <label>
-        Features
-        <input
-          name="features"
-          type="text"
-          value="${escapeHTML(features)}"
-          placeholder="Fully AC, Music System, GPS"
-        >
-        <small style="display:block;margin-top:5px;opacity:.7;">
-          Separate multiple features with commas.
-        </small>
-      </label>
+        <label>
+          Seats
+          <input
+            name="seats"
+            type="number"
+            min="1"
+            placeholder="7"
+            required
+          >
+        </label>
 
-      <label
-        style="
-          display:flex;
-          align-items:center;
-          gap:10px;
-          margin-top:10px;
-        "
-      >
-        <input
-          name="visible"
-          type="checkbox"
-          ${car.visible !== false ? "checked" : ""}
-          style="width:auto;"
-        >
-        <span>Visible</span>
-      </label>
+        <label>
+          Luggage
+          <input
+            name="luggage"
+            type="text"
+            placeholder="As per need"
+          >
+        </label>
 
-      <div
-        class="form-actions"
-        style="
-          display:flex;
-          gap:10px;
-          margin-top:20px;
-        "
-      >
+        <label>
+          Photo URL
+          <input
+            name="image_url"
+            type="url"
+            placeholder="https://..."
+          >
+        </label>
+
+        <label>
+          Features
+          <textarea
+            name="features"
+            rows="3"
+            placeholder="Fully AC, Music System, Comfortable Seats"
+          ></textarea>
+          <small class="muted">
+            Separate features with commas.
+          </small>
+        </label>
+
+        <label style="display:flex;align-items:center;gap:10px;">
+          <input
+            name="visible"
+            type="checkbox"
+            checked
+          >
+          Visible
+        </label>
+
+      </div>
+
+      <div class="modal-actions">
         <button
           type="button"
-          class="secondary"
+          class="darkbtn"
           id="cancelCar"
         >
           Cancel
@@ -362,165 +353,275 @@
           type="submit"
           class="primary"
         >
-          Save Car
+          Save
         </button>
       </div>
     `;
-  }
 
-  // --------------------------------------------------
-  // Add / Edit Car
-  // --------------------------------------------------
-
-  async function openCarEditor(id = null) {
-    let car = {};
-
-    if (id) {
-      const { data, error } = await db
-        .from("cars")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (error) {
-        console.error("Car fetch error:", error);
-        showToast(error.message, true);
-        return;
-      }
-
-      car = data;
-    }
-
-    const title = $("modalTitle");
-    const form = $("modalForm");
-
-    if (!form) {
-      showToast("Modal form not found.", true);
-      return;
-    }
-
-    if (title) {
-      title.textContent = id ? "Edit Car" : "Add Car";
-    }
-
-    form.innerHTML = carFormHTML(car);
-
-    openModal();
+    modal.classList.add("show");
 
     const cancelButton = $("cancelCar");
 
     if (cancelButton) {
-      cancelButton.onclick = closeModal;
+      cancelButton.addEventListener("click", closeModal);
     }
 
-    form.onsubmit = async event => {
+    form.onsubmit = async (event) => {
       event.preventDefault();
 
-      const formData = new FormData(form);
+      await saveCar(null, new FormData(form));
+    };
+  }
 
-      const name = String(formData.get("name") || "").trim();
-      const category = String(formData.get("category") || "").trim();
-      const luggage = String(formData.get("luggage") || "").trim();
-      const image_url = String(formData.get("image_url") || "").trim();
-      const featuresInput = String(formData.get("features") || "").trim();
+  // ------------------------------------------------------------
+  // Edit Car
+  // ------------------------------------------------------------
 
-      if (!name) {
-        showToast("Car name is required.", true);
-        return;
-      }
+  async function editCar(id) {
+    const { data: car, error } = await db
+      .from("cars")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-      const priceRaw = String(formData.get("price") || "").trim();
-      const seatsRaw = String(formData.get("seats") || "").trim();
+    if (error) {
+      console.error("Car fetch error:", error);
+      showError(error.message);
+      return;
+    }
 
-      const price = priceRaw === "" ? 0 : Number(priceRaw);
-      const seats = seatsRaw === "" ? 4 : Number(seatsRaw);
+    const modal = $("modal");
+    const modalTitle = $("modalTitle");
+    const form = $("modalForm");
 
-      if (!Number.isFinite(price) || price < 0) {
-        showToast("Please enter a valid price.", true);
-        return;
-      }
+    if (!modal || !modalTitle || !form) {
+      return;
+    }
 
-      if (!Number.isInteger(seats) || seats < 1) {
-        showToast("Please enter valid seats.", true);
-        return;
-      }
+    modalTitle.textContent = "Edit Car";
 
-      /*
-       * IMPORTANT:
-       * Supabase column "features" is JSONB.
-       *
-       * We send an actual JavaScript array here,
-       * NOT a plain string.
-       *
-       * Example:
-       * "Fully AC, GPS, Music System"
-       *
-       * becomes:
-       * ["Fully AC", "GPS", "Music System"]
-       */
-      const features = parseFeatures(featuresInput);
+    form.innerHTML = `
+      <div class="grid2">
 
-      const carData = {
-        name,
-        category,
-        price,
-        seats,
-        luggage,
-        image_url,
-        features,
-        visible: form.elements.visible.checked
+        <label>
+          Name
+          <input
+            name="name"
+            type="text"
+            value="${esc(car.name)}"
+            required
+          >
+        </label>
+
+        <label>
+          Category
+          <input
+            name="category"
+            type="text"
+            value="${esc(car.category)}"
+            required
+          >
+        </label>
+
+        <label>
+          Price / km
+          <input
+            name="price"
+            type="number"
+            min="0"
+            step="0.01"
+            value="${esc(car.price)}"
+            required
+          >
+        </label>
+
+        <label>
+          Seats
+          <input
+            name="seats"
+            type="number"
+            min="1"
+            value="${esc(car.seats)}"
+            required
+          >
+        </label>
+
+        <label>
+          Luggage
+          <input
+            name="luggage"
+            type="text"
+            value="${esc(car.luggage)}"
+          >
+        </label>
+
+        <label>
+          Photo URL
+          <input
+            name="image_url"
+            type="url"
+            value="${esc(car.image_url)}"
+          >
+        </label>
+
+        <label>
+          Features
+          <textarea
+            name="features"
+            rows="3"
+          >${esc(formatFeatures(car.features))}</textarea>
+          <small class="muted">
+            Separate features with commas.
+          </small>
+        </label>
+
+        <label style="display:flex;align-items:center;gap:10px;">
+          <input
+            name="visible"
+            type="checkbox"
+            ${car.visible ? "checked" : ""}
+          >
+          Visible
+        </label>
+
+      </div>
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="darkbtn"
+          id="cancelCar"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="submit"
+          class="primary"
+        >
+          Update
+        </button>
+
+      </div>
+    `;
+
+    modal.classList.add("show");
+
+    const cancelButton = $("cancelCar");
+
+    if (cancelButton) {
+      cancelButton.addEventListener("click", closeModal);
+    }
+
+    form.onsubmit = async (event) => {
+      event.preventDefault();
+
+      await saveCar(car.id, new FormData(form));
+    };
+  }
+
+  // ------------------------------------------------------------
+  // Save / Update Car
+  // ------------------------------------------------------------
+
+  async function saveCar(id, formData) {
+    try {
+      const features = parseFeatures(
+        formData.get("features")
+      );
+
+      const payload = {
+        name: String(formData.get("name") || "").trim(),
+
+        category: String(
+          formData.get("category") || ""
+        ).trim(),
+
+        price: Number(
+          formData.get("price") || 0
+        ),
+
+        seats: Number(
+          formData.get("seats") || 4
+        ),
+
+        luggage: String(
+          formData.get("luggage") || ""
+        ).trim(),
+
+        image_url: String(
+          formData.get("image_url") || ""
+        ).trim(),
+
+        // IMPORTANT:
+        // Database expects JSONB ARRAY
+        features: features,
+
+        // IMPORTANT:
+        // Database column is "visible", NOT "active"
+        visible: formData.get("visible") === "on"
       };
 
-      console.log("Saving car:", carData);
+      if (!payload.name) {
+        showError("Please enter car name.");
+        return;
+      }
+
+      if (!payload.category) {
+        showError("Please enter car category.");
+        return;
+      }
+
+      if (!Number.isFinite(payload.price)) {
+        showError("Please enter a valid price.");
+        return;
+      }
+
+      if (!Number.isFinite(payload.seats)) {
+        showError("Please enter valid seats.");
+        return;
+      }
 
       let result;
 
       if (id) {
         result = await db
           .from("cars")
-          .update(carData)
-          .eq("id", id)
-          .select()
-          .single();
+          .update(payload)
+          .eq("id", id);
       } else {
         result = await db
           .from("cars")
-          .insert(carData)
-          .select()
-          .single();
+          .insert(payload);
       }
 
       if (result.error) {
         console.error("Car save error:", result.error);
-        showToast(result.error.message, true);
+        showError(result.error.message);
         return;
       }
 
-      console.log("Car saved:", result.data);
-
       closeModal();
-
-      showToast(
-        id
-          ? "Car updated successfully."
-          : "Car added successfully."
-      );
 
       await loadCars();
 
-      window.dispatchEvent(
-        new CustomEvent("cars-updated")
-      );
-    };
+      // Update dashboard counters if available
+      if (typeof window.loadDashboard === "function") {
+        window.loadDashboard();
+      }
+
+    } catch (error) {
+      console.error("Car save exception:", error);
+      showError(error.message || "Could not save car.");
+    }
   }
 
-  // --------------------------------------------------
+  // ------------------------------------------------------------
   // Delete Car
-  // --------------------------------------------------
+  // ------------------------------------------------------------
 
   async function deleteCar(id) {
-    if (!id) return;
-
     const confirmed = confirm(
       "Are you sure you want to delete this car?"
     );
@@ -536,82 +637,73 @@
 
     if (error) {
       console.error("Car delete error:", error);
-      showToast(error.message, true);
+      showError(error.message);
       return;
     }
-
-    showToast("Car deleted successfully.");
 
     await loadCars();
 
-    window.dispatchEvent(
-      new CustomEvent("cars-updated")
-    );
+    if (typeof window.loadDashboard === "function") {
+      window.loadDashboard();
+    }
   }
 
-  // --------------------------------------------------
-  // Event delegation
-  // --------------------------------------------------
+  // ------------------------------------------------------------
+  // Close Modal
+  // ------------------------------------------------------------
 
-  document.addEventListener("click", event => {
+  function closeModal() {
+    const modal = $("modal");
+    const form = $("modalForm");
 
-    const editButton =
-      event.target.closest("[data-car-edit]");
-
-    if (editButton) {
-      const id = editButton.dataset.carEdit;
-      openCarEditor(id);
-      return;
+    if (form) {
+      form.innerHTML = "";
+      form.onsubmit = null;
     }
 
-    const deleteButton =
-      event.target.closest("[data-car-delete]");
-
-    if (deleteButton) {
-      const id = deleteButton.dataset.carDelete;
-      deleteCar(id);
-      return;
+    if (modal) {
+      modal.classList.remove("show");
     }
+  }
 
-    const addButton =
-      event.target.closest("#addCar");
+  // ------------------------------------------------------------
+  // Initialize
+  // ------------------------------------------------------------
+
+  function init() {
+    const addButton = $("addCar");
 
     if (addButton) {
-      openCarEditor();
-      return;
+      addButton.addEventListener("click", openAddCar);
     }
 
-    const closeButton =
-      event.target.closest("#closeModal");
+    const closeButton = $("closeModal");
 
     if (closeButton) {
-      closeModal();
+      closeButton.addEventListener("click", closeModal);
     }
-  });
 
-  // --------------------------------------------------
-  // Load cars after authentication
-  // --------------------------------------------------
+    const modal = $("modal");
 
-  window.addEventListener(
-    "admin-auth-ready",
-    async () => {
-      console.log("Cars module: auth ready.");
-      await loadCars();
+    if (modal) {
+      modal.addEventListener("click", (event) => {
+        if (event.target === modal) {
+          closeModal();
+        }
+      });
     }
-  );
 
-  // --------------------------------------------------
-  // Also load when Cars panel is opened
-  // --------------------------------------------------
+    loadCars();
+  }
 
-  window.addEventListener(
-    "panel-change",
-    async event => {
-      if (event.detail === "cars") {
-        await loadCars();
-      }
-    }
-  );
+  // Make available globally
+  window.loadCars = loadCars;
+
+  // Start after DOM
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 
 })();
