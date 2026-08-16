@@ -158,18 +158,21 @@ async function loadServices(){
 // =========================
 // ROUTES
 // =========================
+
 async function loadRoutes(){
   const {data,error}=await supabaseClient
     .from('routes')
-    .select('*');
+    .select('*')
+    .eq('active',true);
 
-  console.log('ROUTES:',data,error);
+  console.log('ROUTES DATA:',data);
+  console.log('ROUTES ERROR:',error);
 
   const b=document.querySelector('#routesTable');
   if(!b)return;
 
   if(error){
-    b.innerHTML='Error: '+error.message;
+    b.innerHTML='<p style="color:red;">'+esc(error.message)+'</p>';
     return;
   }
 
@@ -184,22 +187,23 @@ async function loadRoutes(){
   `).join('');
 }
 
-
 // =========================
 // REVIEWS
 // =========================
 async function loadReviews(){
   const {data,error}=await supabaseClient
     .from('reviews')
-    .select('*');
+    .select('*')
+    .eq('active',true);
 
-  console.log('REVIEWS:',data,error);
+  console.log('REVIEWS DATA:',data);
+  console.log('REVIEWS ERROR:',error);
 
   const b=document.querySelector('#reviewGrid');
   if(!b)return;
 
   if(error){
-    b.innerHTML='Error: '+error.message;
+    b.innerHTML='<p style="color:red;">'+esc(error.message)+'</p>';
     return;
   }
 
@@ -212,6 +216,7 @@ async function loadReviews(){
     </article>
   `).join('');
 }
+
 
 // =========================
 // START WEBSITE
