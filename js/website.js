@@ -126,66 +126,86 @@ async function loadCars() {
 // =========================
 // SERVICES
 // =========================
-async function loadServices(){
-  const {data,error}=await supabaseClient
+async function loadServices() {
+  const { data, error } = await supabaseClient
     .from('services')
     .select('*')
-    .eq('active',true);
+    .eq('status', true)
+    .order('created_at', { ascending: true });
 
-  console.log('SERVICES DATA:',data);
-  console.log('SERVICES ERROR:',error);
+  const b = document.querySelector('#serviceGrid');
+  if (!b) return;
 
-  const b=document.querySelector('#serviceGrid');
-  if(!b)return;
-
-  if(error){
-    b.innerHTML='<p style="color:red;">'+esc(error.message)+'</p>';
+  if (error) {
+    console.error('Services error:', error);
+    b.innerHTML = `<p>Unable to load services.</p>`;
     return;
   }
 
-  b.innerHTML=(data||[]).map((s,i)=>`
+  b.innerHTML = (data || []).map((s, i) => `
     <article class="service-card">
-      <div class="icon">${esc(s.icon||'✦')}</div>
-      <small>0${i+1}</small>
-      <h3>${esc(s.title||'')}</h3>
-      <p>${esc(s.description||'')}</p>
+      <div class="icon">${esc(s.icon || '✦')}</div>
+      <small>0${i + 1}</small>
+      <h3>${esc(s.title || '')}</h3>
+      <p>${esc(s.description || '')}</p>
       <a href="#booking">Book this service →</a>
     </article>
   `).join('');
 }
-
-
 // =========================
 // ROUTES
 // =========================
 
-async function loadRoutes(){
-  const {data,error}=await supabaseClient
+async function loadRoutes() {
+  const { data, error } = await supabaseClient
     .from('routes')
     .select('*')
-    .eq('active',true);
+    .eq('visible', true)
+    .order('created_at', { ascending: true });
 
-  console.log('ROUTES DATA:',data);
-  console.log('ROUTES ERROR:',error);
+  const b = document.querySelector('#routesTable');
+  if (!b) return;
 
-  const b=document.querySelector('#routesTable');
-  if(!b)return;
-
-  if(error){
-    b.innerHTML='<p style="color:red;">'+esc(error.message)+'</p>';
+  if (error) {
+    console.error('Routes error:', error);
+    b.innerHTML = `<p>Unable to load routes.</p>`;
     return;
   }
 
-  b.innerHTML=(data||[]).map(r=>`
-    <div class="route">
-      <span>${esc(r.pickup||'')} → ${esc(r.destination||'')}</span>
-      <span>${esc(r.distance||'')}<br>${esc(r.travel_time||'')}</span>
-      <b>₹${Number(r.one_way_price||0).toLocaleString('en-IN')}</b>
-      <b>₹${Number(r.round_trip_price||0).toLocaleString('en-IN')}</b>
-      <a href="#booking">Book →</a>
+  b.innerHTML = `
+    <div class="route header">
+      <span>ROUTE</span>
+      <span>DISTANCE / TIME</span>
+      <span>ONE WAY</span>
+      <span>ROUND TRIP</span>
+      <span></span>
     </div>
-  `).join('');
+
+    ${(data || []).map(r => `
+      <div class="route">
+        <span>
+          ${esc(r.from_city || '')} → ${esc(r.to_city || '')}
+        </span>
+
+        <span>
+          ${esc(r.distance || '')}<br>
+          ${esc(r.duration || '')}
+        </span>
+
+        <b>
+          ₹${Number(r.one_way_price || 0).toLocaleString('en-IN')}
+        </b>
+
+        <b>
+          ₹${Number(r.round_price || 0).toLocaleString('en-IN')}
+        </b>
+
+        <a href="#booking">Book →</a>
+      </div>
+    `).join('')}
+  `;
 }
+
 
 // =========================
 // REVIEWS
