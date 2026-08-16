@@ -129,15 +129,17 @@ async function loadCars() {
 async function loadServices(){
   const {data,error}=await supabaseClient
     .from('services')
-    .select('*');
+    .select('*')
+    .eq('active',true);
 
-  console.log('SERVICES:',data,error);
+  console.log('SERVICES DATA:',data);
+  console.log('SERVICES ERROR:',error);
 
   const b=document.querySelector('#serviceGrid');
   if(!b)return;
 
   if(error){
-    b.innerHTML='Error: '+error.message;
+    b.innerHTML='<p style="color:red;">'+esc(error.message)+'</p>';
     return;
   }
 
@@ -151,6 +153,7 @@ async function loadServices(){
     </article>
   `).join('');
 }
+
 
 // =========================
 // ROUTES
