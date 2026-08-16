@@ -10,6 +10,7 @@ const esc = v =>
 // =========================
 // SETTINGS
 // =========================
+
 async function loadSettings() {
   const { data, error } = await supabaseClient
     .from('settings')
@@ -27,64 +28,53 @@ async function loadSettings() {
     return;
   }
 
+  // Business name
   document.title =
     (data.business_name || 'Tejas Taxi') +
     ' | Safe. Simple. On Time.';
 
-  document
-    .querySelectorAll('[data-business]')
-    .forEach(x => {
-      x.textContent = data.business_name || 'Tejas Taxi';
-    });
+  document.querySelectorAll('[data-business]').forEach(el => {
+    el.textContent = data.business_name || 'Tejas Taxi';
+  });
 
+  // Phone
   if (data.phone) {
-    document
-      .querySelectorAll('[data-phone]')
-      .forEach(x => {
-        x.textContent = data.phone;
-        x.href = 'tel:' + data.phone.replace(/\s/g, '');
-      });
+    document.querySelectorAll('[data-phone]').forEach(el => {
+      el.textContent = data.phone;
+      el.href = 'tel:' + data.phone.replace(/\s/g, '');
+    });
   }
 
-  if (data.hero_title) {
-    const heroTitle = document.querySelector('#heroTitle');
-
-    if (heroTitle) {
-      heroTitle.innerHTML =
-        esc(data.hero_title).replace(/\n/g, '<br>');
-    }
+  // Hero title
+  const heroTitle = document.querySelector('#heroTitle');
+  if (heroTitle && data.hero_title) {
+    heroTitle.innerHTML = esc(data.hero_title).replace(/\n/g, '<br>');
   }
 
-  if (data.hero_description) {
-    const heroDescription =
-      document.querySelector('#heroDescription');
-
-    if (heroDescription) {
-      heroDescription.textContent = data.hero_description;
-    }
+  // Hero description
+  const heroDescription = document.querySelector('#heroDescription');
+  if (heroDescription && data.hero_description) {
+    heroDescription.textContent = data.hero_description;
   }
 
-  if (data.hero_image_url) {
-    const heroImage =
-      document.querySelector('#heroImage');
-
-    if (heroImage) {
-      heroImage.src = data.hero_image_url;
-    }
+  // Hero image
+  const heroImage = document.querySelector('#heroImage');
+  if (heroImage && data.hero_image_url) {
+    heroImage.src = data.hero_image_url;
   }
 
-  if (data.about_text) {
-    const aboutText =
-      document.querySelector('#aboutText');
-
-    if (aboutText) {
-      aboutText.textContent = data.about_text;
-    }
+  // About text
+  const aboutText = document.querySelector('#aboutText');
+  if (aboutText && data.about_text) {
+    aboutText.textContent = data.about_text;
   }
 
-  if (data.whatsapp) {
+  // WhatsApp
+  if (data.whatsapp && typeof TEJAS !== 'undefined') {
     TEJAS.whatsapp = data.whatsapp;
   }
+
+  console.log('Settings loaded:', data);
 }
 
 
