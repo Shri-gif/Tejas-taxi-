@@ -1,4 +1,4 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tejas Taxi Admin</title><link rel="stylesheet" href="css/admin.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/supabase.js"></script></head><body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tejas Taxi Admin</title><link rel="stylesheet" href="css/admin.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="js/supabase.js"></script></head><body>
 <div id="login" class="login"><div class="login-card"><h2>TEJAS TAXI — Admin</h2><p class="muted">Customers never need to log in.</p><label>Email<input id="email" type="email"></label><label>Password<input id="password" type="password"></label><button id="loginBtn" class="primary" style="width:100%">Login</button><div id="loginError" class="error"></div></div></div>
 <div id="app" class="app"><aside class="sidebar"><h2>Tejas Taxi</h2><button class="nav active" data-panel="dashboard">📊 Dashboard</button><button class="nav" data-panel="cars">🚕 Cars</button><button class="nav" data-panel="routes">🛣️ Routes</button><button class="nav" data-panel="services">🛎️ Services</button><button class="nav" data-panel="reviews">⭐ Reviews</button><button class="nav" data-panel="bookings">📋 Bookings</button><button class="nav" data-panel="settings">⚙️ Settings</button><button id="logoutBtn">↪ Logout</button></aside><main class="main"><div class="top"><div><h1 id="pageTitle">Dashboard</h1><span class="muted">Manage the website without editing code.</span></div></div>
 <section id="dashboard" class="panel active"><div class="stats"><div class="stat">Cars<b id="statCars">0</b></div><div class="stat">Routes<b id="statRoutes">0</b></div><div class="stat">Reviews<b id="statReviews">0</b></div><div class="stat">New bookings<b id="statBookings">0</b></div></div></section>
@@ -11,7 +11,7 @@
 <div id="modal" class="modal"><div class="modal-card"><div class="modal-head"><h2 id="modalTitle">Edit</h2><button id="closeModal" class="close">✕</button></div><form id="modalForm"></form></div></div>
 <script src="js/auth.js"></script>
 <script src="js/dashboard.js"></script>
-<script src="js/cars.js?v=2"></script>
+<script src="js/cars.js"></script>
 <script src="js/routes.js"></script>
 <script src="js/services.js"></script>
 <script src="js/reviews.js"></script>
