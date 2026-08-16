@@ -330,25 +330,37 @@ function openCar(id) {
          Always send a real array.
       ========================= */
 
-      const featuresText =
-        (f.get('features') || '').trim();
+      features: (() => {
+  const value = f.get("features").trim();
 
+  if (!value) return [];
 
-      const features =
-        featuresText === ''
-          ? []
-          : featuresText
-              .split(',')
-              .map(x => x.trim())
-              .filter(x => x.length > 0);
+  // JSON array already entered
+  try {
+    const parsed = JSON.parse(value);
+
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map(x => String(x).trim())
+        .filter(Boolean);
+    }
+  } catch (_) {
+    // Normal text like "Fully AC, Music System"
+  }
+
+  // Convert normal comma-separated text into array
+  return value
+    .split(",")
+    .map(x => x.trim())
+    .filter(Boolean);
+})(),
 
 
       /* =========================
          ACTIVE
       ========================= */
 
-      const active =
-        f.get('active') === 'on';
+      active: f.get("active") === "on"
 
 
       /* =========================
